@@ -6,7 +6,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "http4s-jwks-auth-middleware",
     organization := "io.swisty",
-    version := "1.0",
+    version := "0.1",
     scalaVersion := "2.13.3",   
 libraryDependencies ++= Seq(
   "org.http4s"    %% "http4s-server" % Http4sVersion,
