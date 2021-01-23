@@ -1,0 +1,16 @@
+.bloop
+.idea
+.ensime
+.ensime_cache
+.metals
+.sbtopts
+
+target/
+.DS_Store
+*.class
+*.log
+
+node_modules
+dist/
+
+application.conf
