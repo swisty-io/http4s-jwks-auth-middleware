@@ -4,6 +4,6 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.http4s.implicits._
 import org.http4s._
 
-class JwtAuthMiddlewareSpec extends AnyWordSpec with Http4sSpec with Matchers {
+class JwtAuthMiddlewareSpec extends AnyWordSpec with Matchers {
   "JwtAuthMiddleware" should {}
 }
