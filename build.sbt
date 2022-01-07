@@ -1,5 +1,5 @@
-val Http4sVersion = "0.21.8"
-val CirceVersion = "0.13.0"
+val Http4sVersion = "0.23.7"
+val CirceVersion = "0.14.1"
 val ScalaTestVersion = "3.2.2"
 
 lazy val root = (project in file("."))
@@ -9,15 +9,16 @@ lazy val root = (project in file("."))
     version := "0.1",
     scalaVersion := "2.13.3",
     libraryDependencies ++= Seq(
-      "org.http4s"    %% "http4s-server"       % Http4sVersion,
-      "org.http4s"    %% "http4s-circe"        % Http4sVersion,
-      "org.http4s"    %% "http4s-blaze-client" % Http4sVersion,
-      "org.http4s"    %% "http4s-testing"      % Http4sVersion    % "test",
-      "io.circe"      %% "circe-generic"       % CirceVersion,
-      "com.pauldijou" %% "jwt-circe"           % "4.3.0",
-      "com.chatwork"  %% "scala-jwk"           % "1.0.5",
-      "io.circe"      %% "circe-generic"       % CirceVersion,
-      "org.scalatest" %% "scalatest"           % ScalaTestVersion % "test"
+      "org.http4s"           %% "http4s-server"                 % Http4sVersion,
+      "org.http4s"           %% "http4s-circe"                  % Http4sVersion,
+      "org.http4s"           %% "http4s-blaze-client"           % Http4sVersion,
+      "org.http4s"           %% "http4s-dsl"                    % Http4sVersion,
+      "io.circe"             %% "circe-generic"                 % CirceVersion,
+      "com.github.jwt-scala" %% "jwt-circe"                     % "9.0.3",
+      "com.chatwork"         %% "scala-jwk"                     % "1.2.22",
+      "io.circe"             %% "circe-generic"                 % CirceVersion,
+      "org.scalatest"        %% "scalatest"                     % ScalaTestVersion % Test,
+      "org.typelevel"        %% "cats-effect-testing-scalatest" % "1.4.0"          % Test
     ),
     addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.10.3"),
     addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.0"),

@@ -14,8 +14,9 @@ node_modules
 dist/
 
 application.conf
-
+.bsp/
 .bloop
 .metals
 project/metals.sbt
 .vscode/
+project/project
