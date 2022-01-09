@@ -34,7 +34,7 @@ trait AuthMiddlewareFixture {
   val base64StringFactory = Base64StringFactory(urlSafe = true, isNoPadding = true)
 
   val thing = 1
-  val audience = "http://someaudience.modaapps.com"
+  val audience = "http://someaudience.swisty.io"
 
   def httpClient(body: String): Client[IO] = Client.apply[IO] { _ =>
     Resource.make(IO(Response[IO](body = Stream.emits(body.getBytes("UTF-8")))))(_ => IO.unit)
@@ -50,7 +50,8 @@ trait AuthMiddlewareFixture {
   def authedRoutes(audience: String, jwkProvider: JWKSProvider[IO]): Kleisli[IO, Request[IO], Response[IO]] = {
     val dsl = new Http4sDsl[IO] {}
     import dsl._
-    val middleware = JWTToken.authMiddleware(audience, jwkProvider)
+    IO(audience) // TODO: user this
+    val middleware = JWTToken.authMiddleware(None, jwkProvider)
     val routes = AuthedRoutes.of[JwtClaim, IO] { case authReq @ GET -> Root as user =>
       Ok(s"success ${user.issuer} ${authReq}")
     }
@@ -70,6 +71,4 @@ trait AuthMiddlewareFixture {
       jwk <- RSAJWK(n = n, e = e, publicKeyUse = Some(PublicKeyUseType.Signature), keyId = Some(KeyId(keyId)))
     } yield JWKSet(jwk)
   }
-
-
 }
