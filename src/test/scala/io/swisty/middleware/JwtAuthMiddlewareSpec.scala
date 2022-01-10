@@ -99,5 +99,47 @@ class JwtAuthMiddlewareSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers
       )
         .asserting(_.status shouldBe Status.Ok)
     }
+
+    "Valid JWT credentials with audience" in {
+      val header = new JwtHeader(Some(JwtAlgorithm.RS256), Some("JWT"), None, Some(keyId))
+      val issuer = "bobo"
+      val claim = new JwtClaim(
+        "stuff",
+        Some(issuer),
+        Some(sub),
+        Some(Set(audience)),
+        Some(Instant.now().plus(1, ChronoUnit.HOURS).getEpochSecond()),
+        None,
+        Some(Instant.now().getEpochSecond()),
+        Some(keyId)
+      )
+      service(
+        basicRequest.putHeaders(
+          Authorization(Credentials.Token(AuthScheme.Bearer, Jwt.encode(header, claim, keyPair.getPrivate())))
+        ), Some(audience)
+      )
+        .asserting(_.status shouldBe Status.Ok)
+    }
+  }
+
+  "Valid JWT credentials with incorrect audience" in {
+    val header = new JwtHeader(Some(JwtAlgorithm.RS256), Some("JWT"), None, Some(keyId))
+    val issuer = "bobo"
+    val claim = new JwtClaim(
+      "stuff",
+      Some(issuer),
+      Some(sub),
+      Some(Set(audience)),
+      Some(Instant.now().plus(1, ChronoUnit.HOURS).getEpochSecond()),
+      None,
+      Some(Instant.now().getEpochSecond()),
+      Some(keyId)
+    )
+    service(
+      basicRequest.putHeaders(
+        Authorization(Credentials.Token(AuthScheme.Bearer, Jwt.encode(header, claim, keyPair.getPrivate())))
+      ), Some("http://some-other-audience.swisty.io")
+    )
+      .asserting(_.status shouldBe Status.Forbidden)
   }
 }

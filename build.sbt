@@ -2,7 +2,12 @@ val Http4sVersion = "0.23.7"
 val CirceVersion = "0.14.1"
 val ScalaTestVersion = "3.2.2"
 
+val replSettings = "import cats._; import cats.implicits._; import cats.data._; import cats.effect._; import cats.effect.unsafe.implicits._".stripMargin
+
+val myReplSettings = Compile / console / initialCommands := replSettings
+
 lazy val root = (project in file("."))
+  .settings(myReplSettings)
   .settings(
     name := "http4s-jwks-auth-middleware",
     organization := "io.swisty",

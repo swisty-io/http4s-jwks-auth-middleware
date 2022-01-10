@@ -33,25 +33,24 @@ trait AuthMiddlewareFixture {
 
   val base64StringFactory = Base64StringFactory(urlSafe = true, isNoPadding = true)
 
-  val thing = 1
+  val issuer = "http://someaudience.swisty.io"
   val audience = "http://someaudience.swisty.io"
 
   def httpClient(body: String): Client[IO] = Client.apply[IO] { _ =>
     Resource.make(IO(Response[IO](body = Stream.emits(body.getBytes("UTF-8")))))(_ => IO.unit)
   }
 
-  def service(r: Request[IO]) = for {
+  def service(r: Request[IO], audience: Option[String] = None) = for {
     jwskSetText <- IO(jwksetEither.map(f => f.toJsonString).getOrElse(""))
-    jwkProvider <- JWKSProvider(audience, httpClient(jwskSetText))
+    jwkProvider <- JWKSProvider(issuer, httpClient(jwskSetText))
     t            = authedRoutes(audience, jwkProvider)
     resp        <- t.run(r)
   } yield resp
 
-  def authedRoutes(audience: String, jwkProvider: JWKSProvider[IO]): Kleisli[IO, Request[IO], Response[IO]] = {
+  def authedRoutes(audience: Option[String], jwkProvider: JWKSProvider[IO]): Kleisli[IO, Request[IO], Response[IO]] = {
     val dsl = new Http4sDsl[IO] {}
     import dsl._
-    IO(audience) // TODO: user this
-    val middleware = JWTToken.authMiddleware(None, jwkProvider)
+    val middleware = JWTToken.authMiddleware(audience, jwkProvider)
     val routes = AuthedRoutes.of[JwtClaim, IO] { case authReq @ GET -> Root as user =>
       Ok(s"success ${user.issuer} ${authReq}")
     }

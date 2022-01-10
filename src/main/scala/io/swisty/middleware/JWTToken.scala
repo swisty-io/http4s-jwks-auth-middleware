@@ -20,14 +20,15 @@ final case class ExpiredCredentials(message: String) extends Exception(message) 
 trait JWKSProvider[F[_]] {
   def jwktSet: F[JWKSet]
 }
+
 object JWKSProvider {
   def apply[F[_]: Async](subject: String, client: Client[F]): F[JWKSProvider[F]] = {
     implicit val authResponseEntityDecoder: EntityDecoder[F, JWKSet] = jsonOf[F, JWKSet]
     val jwksUrl: ParseResult[Uri] = Uri.fromString(s"$subject.well-known/jwks.json")
     for {
-      jwks <- Async[F].fromEither(jwksUrl)
-      t    <- client.expect[JWKSet](jwks)(authResponseEntityDecoder)
-      ref  <- Async[F].delay(Ref.unsafe(t))
+      jwks       <- Async[F].fromEither(jwksUrl)
+      jwksResult <- client.expect[JWKSet](jwks)(authResponseEntityDecoder)
+      ref        <- Async[F].delay(Ref.unsafe(jwksResult))
     } yield new JWKSProvider[F] {
       def jwktSet =
         ref.get
@@ -39,12 +40,26 @@ object JWTToken {
     audience: Option[String],
     jwkProvider: JWKSProvider[F]
   ): Kleisli[F, Request[F], Either[String, JwtClaim]] = {
+
     def extractToken(req: Request[F]): Option[String] =
       req.headers.get[Authorization] collect { case Authorization(Credentials.Token(AuthScheme.Bearer, token)) =>
         token
       }
+
+    def maybeClaimMatchingAudience(jwtCkaim: JwtClaim, audience: Option[String]): F[JwtClaim] =
+      audience.zip(jwtCkaim.audience) match {
+        case None                   => Sync[F].delay(jwtCkaim)
+        case Some((aud, audiences)) =>
+          if (audiences.contains(aud)) {
+            println("CFM: it matched!!!!!")
+            Sync[F].delay(jwtCkaim)
+          } else {
+            Sync[F].raiseError[JwtClaim](InvalidCredentials("missing/mismatched audience"))
+          }
+      }
+
     Kleisli { request: Request[F] =>
-      val m = for {
+      val claim = for {
         jwtSet         <- jwkProvider.jwktSet
         token          <- Sync[F].fromOption(extractToken(request), InvalidCredentials("unable to extract token"))
         (header, _, _) <- Sync[F].fromTry(
@@ -58,23 +73,27 @@ object JWTToken {
                             header.keyId.flatMap(ds => jwtSet.keyByKeyId(KeyId(ds)).map(_.toPublicJWK.asInstanceOf[RSAJWK])),
                             InvalidCredentials("no matching jwks")
                           )
-        _              <- Sync[F].pure(println(s"audience: $audience"))
         publicKey      <- Sync[F].fromEither(publicJwk.toPublicKey.leftMap(e => InvalidCredentials(e.message)))
         jwtClaim       <- Sync[F].fromTry(JwtCirce.decode(token, publicKey))
-      } yield jwtClaim
+        _              <- Sync[F].delay(println(s"CFM: audience is $audience"))
+        finalClaim     <- maybeClaimMatchingAudience(jwtClaim, audience)
+      } yield finalClaim
       Sync[F]
-        .attempt(m)
+        .attempt(claim)
         .map(_.leftMap(_.getMessage()))
     }
   }
-  def onFailure[F[_]: Sync]: AuthedRoutes[String, F] =
-    Kleisli(_ => OptionT.pure(Response[F](Status.Forbidden)))
-  // TODO: change status based
+
+  // TODO: change status based of exception type
   // JwtNotBeforeException(s))
   // JwtExpirationException(e))
+  def onFailure[F[_]: Sync]: AuthedRoutes[String, F] =
+    Kleisli(_ => OptionT.pure(Response[F](Status.Forbidden)))
+
   def authMiddleware[F[_]: Sync](
     audience: Option[String],
     jwkProvider: JWKSProvider[F]
   ) =
     AuthMiddleware(authUser(audience, jwkProvider), onFailure)
+
 }
