@@ -15,7 +15,7 @@ import java.security.KeyPair
 import java.security.interfaces.RSAPublicKey
 
 trait AuthMiddlewareFixture {
-    val keyPair: KeyPair = {
+  val keyPair: KeyPair = {
     val keyGenerator = KeyPairGenerator.getInstance("RSA")
     keyGenerator.initialize(1024)
     keyGenerator.genKeyPair()

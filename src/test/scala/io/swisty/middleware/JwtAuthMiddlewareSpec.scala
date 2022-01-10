@@ -116,7 +116,8 @@ class JwtAuthMiddlewareSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers
       service(
         basicRequest.putHeaders(
           Authorization(Credentials.Token(AuthScheme.Bearer, Jwt.encode(header, claim, keyPair.getPrivate())))
-        ), Some(audience)
+        ),
+        Some(audience)
       )
         .asserting(_.status shouldBe Status.Ok)
     }
@@ -138,7 +139,8 @@ class JwtAuthMiddlewareSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers
     service(
       basicRequest.putHeaders(
         Authorization(Credentials.Token(AuthScheme.Bearer, Jwt.encode(header, claim, keyPair.getPrivate())))
-      ), Some("http://some-other-audience.swisty.io")
+      ),
+      Some("http://some-other-audience.swisty.io")
     )
       .asserting(_.status shouldBe Status.Forbidden)
   }

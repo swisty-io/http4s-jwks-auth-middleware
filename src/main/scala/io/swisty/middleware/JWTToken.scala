@@ -51,7 +51,6 @@ object JWTToken {
         case None                   => Sync[F].delay(jwtCkaim)
         case Some((aud, audiences)) =>
           if (audiences.contains(aud)) {
-            println("CFM: it matched!!!!!")
             Sync[F].delay(jwtCkaim)
           } else {
             Sync[F].raiseError[JwtClaim](InvalidCredentials("missing/mismatched audience"))
@@ -75,7 +74,6 @@ object JWTToken {
                           )
         publicKey      <- Sync[F].fromEither(publicJwk.toPublicKey.leftMap(e => InvalidCredentials(e.message)))
         jwtClaim       <- Sync[F].fromTry(JwtCirce.decode(token, publicKey))
-        _              <- Sync[F].delay(println(s"CFM: audience is $audience"))
         finalClaim     <- maybeClaimMatchingAudience(jwtClaim, audience)
       } yield finalClaim
       Sync[F]
