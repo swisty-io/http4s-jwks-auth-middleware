@@ -51,8 +51,8 @@ trait AuthMiddlewareFixture {
     val dsl = new Http4sDsl[IO] {}
     import dsl._
     val middleware = JWTToken.authMiddleware(audience, jwkProvider)
-    val routes = AuthedRoutes.of[JwtClaim, IO] { case authReq @ GET -> Root as user =>
-      Ok(s"success ${user.issuer} ${authReq}")
+    val routes = AuthedRoutes.of[JwtClaim, IO] { case GET -> Root as claim =>
+      Ok(s"success ${claim.content}")
     }
     middleware(routes).orNotFound
   }
